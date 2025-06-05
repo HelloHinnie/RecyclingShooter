@@ -78,6 +78,90 @@ void drawMap2D()
     }
 }
 
+/*void drawWeapon() {
+    int displayWidthOnScreen = 192;
+    int displayHeightOnScreen = 192;
+
+    int screenPosX = (960 - displayWidthOnScreen) / 2;
+    int screenPosY = 640 - displayHeightOnScreen + 20;
+
+   
+    static float bobVerticalOffset = 0;
+    static int bobDirection = 1; // 1 para baixo, -1 para cima
+    float bobMagnitude = 8.0f;  // Máximo de pixels para o balanço vertical
+    float bobSpeed = 0.04f;    // Velocidade do balanço
+
+
+    if (Keys.w == 1 || Keys.s == 1 || Keys.a == 1 || Keys.d == 1) { // Se o jogador está se movendo
+        bobVerticalOffset += bobSpeed * fps * bobDirection;
+        if (bobVerticalOffset > bobMagnitude) {
+            bobVerticalOffset = bobMagnitude;
+            bobDirection = -1;
+        } else if (bobVerticalOffset < -bobMagnitude) {
+            bobVerticalOffset = -bobMagnitude;
+            bobDirection = 1;
+        }
+    } else { // Jogador parado, gradualmente retorna ao centro
+        if (bobVerticalOffset > 0.05f) {
+            bobVerticalOffset -= bobSpeed * fps * 0.5f; 
+            if (bobVerticalOffset < 0) bobVerticalOffset = 0;
+        } else if (bobVerticalOffset < -0.05f) {
+            bobVerticalOffset += bobSpeed * fps * 0.5f;
+            if (bobVerticalOffset > 0) bobVerticalOffset = 0;
+        } else {
+            bobVerticalOffset = 0;
+        }
+    }
+    screenPosY += (int)bobVerticalOffset; // Aplica o balanço à posição Y
+
+    // Razões para mapear pixels da área de exibição na tela para pixels do sprite da arma (32x32)
+    float texX_per_screenX = (float)32 / displayWidthOnScreen;
+    float texY_per_screenY = (float)32 / displayHeightOnScreen;
+
+    // Calcula o deslocamento base para o início dos dados do sprite da arma no array 'sprites'
+    int baseOffsetToWeaponInSpritesArray = 0 * 32 * 32 * 3;
+
+    glBegin(GL_POINTS);
+    // Itera sobre a área de exibição da arma na tela, em passos de 8 (devido ao glPointSize(8))
+    for (int y_on_screen_area = 0; y_on_screen_area < displayHeightOnScreen; y_on_screen_area += 8) {
+        for (int x_on_screen_area = 0; x_on_screen_area < displayWidthOnScreen; x_on_screen_area += 8) {
+            int currentScreenX_for_block = screenPosX + x_on_screen_area;
+            int currentScreenY_for_block = screenPosY + y_on_screen_area;
+
+            // Mapeia o centro do bloco de 8x8 da tela para um pixel dentro do sprite da arma (32 x 32)
+            int local_sprite_x = (int)((x_on_screen_area + 4) * texX_per_screenX); // +4 para pegar o centro do bloco de 8x8
+            int local_sprite_y = (int)((y_on_screen_area + 4) * texY_per_screenY);
+
+            // Garante que as coordenadas locais do sprite estejam dentro dos limites (0 a 32-1)
+            if (local_sprite_x < 0) local_sprite_x = 0;
+            if (local_sprite_x >= 32) local_sprite_x = 32 - 1;
+            if (local_sprite_y < 0) local_sprite_y = 0;
+            if (local_sprite_y >= 32) local_sprite_y = 32 - 1;
+
+            // Calcula o índice do pixel dentro do array 'sprites'
+            int pixelOffsetWithinSpriteData = (local_sprite_y * 32 + local_sprite_x) * 3;
+            int finalPixelIndexInSpritesArray = baseOffsetToWeaponInSpritesArray + pixelOffsetWithinSpriteData;
+            
+            // (Opcional, mas bom para debug): Verificar se finalPixelIndexInSpritesArray está dentro dos limites do array 'sprites'
+            // Isso exigiria saber o tamanho total do array 'sprites'.
+
+            unsigned char r = sprites[finalPixelIndexInSpritesArray + 0];
+            unsigned char g = sprites[finalPixelIndexInSpritesArray + 1];
+            unsigned char b = sprites[finalPixelIndexInSpritesArray + 2];
+
+            // Cor de transparência (magenta: R=255, G=0, B=255)
+            // Ajuste se sua cor de transparência for diferente
+            if (r == 255 && g == 0 && b == 255) {
+                continue; // Pula o desenho deste pixel (é transparente)
+            }
+
+            glColor3ub(r, g, b);
+            glVertex2i(currentScreenX_for_block + 4, currentScreenY_for_block + 4);
+        }
+    }
+    glEnd();
+}*/
+
 //calculo de distancia 
 /*
 float distance(ax,ay,bx,by,ang)
@@ -251,6 +335,7 @@ void display()
     drawMap2D();
     drawPlayer();
     drawRays2D();
+    //drawWeapon();
     glutSwapBuffers();
 };
 
