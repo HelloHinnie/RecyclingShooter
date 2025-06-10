@@ -1,20 +1,27 @@
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <GL/freeglut.h>
 #include <math.h>
-/*
-#define PI 3.1415926535
-#define PI2 PI/2
-#define PI3 3*PI/2 */
+
+#include "Texturas/AllTextures.ppm"
+#include "Texturas/ceu.ppm"
+#include "Texturas/inicio.ppm"
+
+typedef struct 
+{
+    int w, a, s, d, enter;
+}Teclado;
+Teclado Botoes;
 
 float px, py, pdx, pdy, pa; //posição do jogador
 
+int gameState=0;
+
 //funções para usar angulo
-float degToRad(int a) 
+float degToRad(float a) 
 { 
     return (a*M_PI/180.0);
 }
-int FixAng(int a)
+float FixAng(float a)
 { 
     if(a>359)
         a-=360; 
@@ -23,42 +30,67 @@ int FixAng(int a)
     return a;
 }
 
-void drawPlayer()
-{
-    glColor3f(1,1,0);
-    glPointSize(8);
-    glBegin(GL_POINTS);
-    glVertex2i(px, py);
-    glEnd();
-
-    glLineWidth(3);
-    glBegin(GL_LINES);
-    glVertex2i(px, py);
-    glVertex2i(px+pdx*5, py+pdy*5);
-    glEnd();
-};
-
 int mapX=8, mapY=8, mapS=64;
-int map[] =
+int map[] = //mapa das paredes
 {
-    1,1,1,1,1,1,1,1,
+    1,1,2,1,1,1,1,1,
+    1,0,1,0,0,0,0,1,
+    1,0,1,0,0,0,0,1,
+    1,0,1,0,0,0,0,1,
+    1,0,0,0,1,0,0,1,
     1,0,0,0,0,0,0,1,
     1,0,0,0,0,0,0,1,
-    1,0,0,1,1,0,0,1,
-    1,0,0,1,1,0,0,1,
-    1,0,0,0,0,0,0,1,
-    1,0,0,0,0,0,0,1,
-    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1
 };
+
+int mapC[] = //mapa do chao
+{
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,2,2,2,2,2,0,
+    0,0,0,0,0,0,2,0,
+    0,0,0,0,0,0,2,0,
+    0,0,0,0,0,0,2,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0
+};
+
+int mapT[] = //mapa do teto
+{
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0
+};
+
+
 
 void drawMap2D()
 {
     int x, y , xo, yo;
+    int tmapS=mapS/4;
+
     for(y=0; y<mapY; y++)
     {
         for(x=0; x<mapX; x++)
         {
-            if(map[y*mapX+x]==1)
+            //desenho do fundo cinza do minimapa
+            xo = x*tmapS;
+            yo = y*tmapS;
+            glColor3f(0.4,0.4,0.4);
+            glBegin(GL_QUADS);
+            glVertex2i(xo, yo);
+            glVertex2i(xo, yo+tmapS);
+            glVertex2i(xo+tmapS, yo+tmapS);
+            glVertex2i(xo+tmapS, yo);
+            glEnd();
+
+            //desenho das paredes do minimapa
+            if(map[y*mapX+x]>0)
             {
                 glColor3f(1,1,1);
             }
@@ -66,135 +98,46 @@ void drawMap2D()
             {
                 glColor3f(0,0,0);
             }
-            xo = x*mapS;
-            yo = y*mapS;
             glBegin(GL_QUADS);
             glVertex2i(xo + 1, yo + 1);
-            glVertex2i(xo + 1, yo+mapS-1);
-            glVertex2i(xo+mapS-1, yo+mapS-1);
-            glVertex2i(xo+mapS-1, yo+1);
+            glVertex2i(xo + 1, yo+tmapS-1);
+            glVertex2i(xo+tmapS-1, yo+tmapS-1);
+            glVertex2i(xo+tmapS-1, yo+1);
             glEnd();
+
+            
         }
     }
 }
 
-/*void drawWeapon() {
-    int displayWidthOnScreen = 192;
-    int displayHeightOnScreen = 192;
 
-    int screenPosX = (960 - displayWidthOnScreen) / 2;
-    int screenPosY = 640 - displayHeightOnScreen + 20;
-
-   
-    static float bobVerticalOffset = 0;
-    static int bobDirection = 1; // 1 para baixo, -1 para cima
-    float bobMagnitude = 8.0f;  // Máximo de pixels para o balanço vertical
-    float bobSpeed = 0.04f;    // Velocidade do balanço
-
-
-    if (Keys.w == 1 || Keys.s == 1 || Keys.a == 1 || Keys.d == 1) { // Se o jogador está se movendo
-        bobVerticalOffset += bobSpeed * fps * bobDirection;
-        if (bobVerticalOffset > bobMagnitude) {
-            bobVerticalOffset = bobMagnitude;
-            bobDirection = -1;
-        } else if (bobVerticalOffset < -bobMagnitude) {
-            bobVerticalOffset = -bobMagnitude;
-            bobDirection = 1;
-        }
-    } else { // Jogador parado, gradualmente retorna ao centro
-        if (bobVerticalOffset > 0.05f) {
-            bobVerticalOffset -= bobSpeed * fps * 0.5f; 
-            if (bobVerticalOffset < 0) bobVerticalOffset = 0;
-        } else if (bobVerticalOffset < -0.05f) {
-            bobVerticalOffset += bobSpeed * fps * 0.5f;
-            if (bobVerticalOffset > 0) bobVerticalOffset = 0;
-        } else {
-            bobVerticalOffset = 0;
-        }
-    }
-    screenPosY += (int)bobVerticalOffset; // Aplica o balanço à posição Y
-
-    // Razões para mapear pixels da área de exibição na tela para pixels do sprite da arma (32x32)
-    float texX_per_screenX = (float)32 / displayWidthOnScreen;
-    float texY_per_screenY = (float)32 / displayHeightOnScreen;
-
-    // Calcula o deslocamento base para o início dos dados do sprite da arma no array 'sprites'
-    int baseOffsetToWeaponInSpritesArray = 0 * 32 * 32 * 3;
-
+void drawPlayer()
+{
+    int tpx=px/4, tpy=py/4;
+    glColor3f(1,1,0);
+    glPointSize(8);
     glBegin(GL_POINTS);
-    // Itera sobre a área de exibição da arma na tela, em passos de 8 (devido ao glPointSize(8))
-    for (int y_on_screen_area = 0; y_on_screen_area < displayHeightOnScreen; y_on_screen_area += 8) {
-        for (int x_on_screen_area = 0; x_on_screen_area < displayWidthOnScreen; x_on_screen_area += 8) {
-            int currentScreenX_for_block = screenPosX + x_on_screen_area;
-            int currentScreenY_for_block = screenPosY + y_on_screen_area;
-
-            // Mapeia o centro do bloco de 8x8 da tela para um pixel dentro do sprite da arma (32 x 32)
-            int local_sprite_x = (int)((x_on_screen_area + 4) * texX_per_screenX); // +4 para pegar o centro do bloco de 8x8
-            int local_sprite_y = (int)((y_on_screen_area + 4) * texY_per_screenY);
-
-            // Garante que as coordenadas locais do sprite estejam dentro dos limites (0 a 32-1)
-            if (local_sprite_x < 0) local_sprite_x = 0;
-            if (local_sprite_x >= 32) local_sprite_x = 32 - 1;
-            if (local_sprite_y < 0) local_sprite_y = 0;
-            if (local_sprite_y >= 32) local_sprite_y = 32 - 1;
-
-            // Calcula o índice do pixel dentro do array 'sprites'
-            int pixelOffsetWithinSpriteData = (local_sprite_y * 32 + local_sprite_x) * 3;
-            int finalPixelIndexInSpritesArray = baseOffsetToWeaponInSpritesArray + pixelOffsetWithinSpriteData;
-            
-            // (Opcional, mas bom para debug): Verificar se finalPixelIndexInSpritesArray está dentro dos limites do array 'sprites'
-            // Isso exigiria saber o tamanho total do array 'sprites'.
-
-            unsigned char r = sprites[finalPixelIndexInSpritesArray + 0];
-            unsigned char g = sprites[finalPixelIndexInSpritesArray + 1];
-            unsigned char b = sprites[finalPixelIndexInSpritesArray + 2];
-
-            // Cor de transparência (magenta: R=255, G=0, B=255)
-            // Ajuste se sua cor de transparência for diferente
-            if (r == 255 && g == 0 && b == 255) {
-                continue; // Pula o desenho deste pixel (é transparente)
-            }
-
-            glColor3ub(r, g, b);
-            glVertex2i(currentScreenX_for_block + 4, currentScreenY_for_block + 4);
-        }
-    }
+    glVertex2i(tpx, tpy);
     glEnd();
-}*/
 
-//calculo de distancia 
-/*
-float distance(ax,ay,bx,by,ang)
-{ 
-    return (cos(degToRad(ang))*(bx-ax)-sin(degToRad(ang))*(by-ay));
-} */
+    glLineWidth(3);
+    glBegin(GL_LINES);
+    glVertex2i(tpx, tpy);
+    glVertex2i(tpx+pdx*10, tpy+pdy*10);
+    glEnd();
+};
+
 
 void drawRays2D()
 { 
-    //desenhar o ceu
-    glColor3f(0,1,1); 
-    glBegin(GL_QUADS); 
-    glVertex2i(526,  0); 
-    glVertex2i(1006,  0); 
-    glVertex2i(1006,160); 
-    glVertex2i(526,160); 
-    glEnd();	
-    //desenhar o chao
-    glColor3f(0,0,1); 
-    glBegin(GL_QUADS); 
-    glVertex2i(526,160); 
-    glVertex2i(1006,160); 
-    glVertex2i(1006,320); 
-    glVertex2i(526,320); 
-    glEnd();	 	
-	
     int r,mx,my,mp,dof,side; 
     float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
  
-    ra=FixAng(pa+40);
+    ra=FixAng(pa+30);
  
-    for(r=0;r<60;r++)
+    for(r=0;r<120;r++)
     {
+        int vmt=0,hmt=0;   
     //Checa por linhas verticais
         dof=0; side=0; disV=100000;
         float Tan=tan(degToRad(ra));
@@ -202,7 +145,8 @@ void drawRays2D()
         { 
             rx=(((int)px>>6)<<6)+64;
             ry=(px-rx)*Tan+py; 
-            xo= 64; yo=-xo*Tan;
+            xo= 64; 
+            yo=-xo*Tan;
         } //Checa se está olhando para esquerda
         else 
             if(cos(degToRad(ra))<-0.001)
@@ -225,8 +169,9 @@ void drawRays2D()
             my=(int)(ry)>>6; 
             mp=my*mapX+mx;
 
-            if(mp>0 && mp<mapX*mapY && map[mp]==1)
+            if(mp>0 && mp<mapX*mapY && map[mp]>0)
             { 
+                vmt=map[mp]-1;
                 dof=8; 
                 disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);
             }        
@@ -271,8 +216,9 @@ void drawRays2D()
             my=(int)(ry)>>6; 
             mp=my*mapX+mx;                     
 
-            if(mp>0 && mp<mapX*mapY && map[mp]==1)
+            if(mp>0 && mp<mapX*mapY && map[mp]>0)
             { 
+                hmt=map[mp]-1;
                 dof=8; 
                 disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);
             }
@@ -283,45 +229,160 @@ void drawRays2D()
                 dof+=1;
             }   //Checa a próxima horizontal
         } 
-        
+        float shade=1;
         glColor3f(0,0.8,0);
         if(disV<disH)
         { 
+            hmt=vmt; 
+            shade=0.5; 
             rx=vx; 
             ry=vy; 
             disH=disV; 
             glColor3f(0,0.6,0);
-        } //Horizontal mais próxima
+        }
 
+        /*
+        float pxt=px/4, pyt=py/4, rxt=rx/4, ryt=ry/4;
         glLineWidth(2); 
         glBegin(GL_LINES); 
-        glVertex2i(px,py); 
-        glVertex2i(rx,ry); 
+        glVertex2i(pxt,pyt); 
+        glVertex2i(rxt,ryt); 
         glEnd();//Desenha ray 2d
+        */
             
         int ca=FixAng(pa-ra); 
         disH=disH*cos(degToRad(ca));  //Consertar fisheye
-        int lineH = (mapS*320)/(disH); 
-        if(lineH>320)
-            lineH=320;                   //Altura e limite
-        int lineOff = 160 - (lineH>>1);  //offset para ficar na altura certa da tela
+        int lineH = (mapS*640)/(disH); 
+        float ty_step=32.0/(float)lineH; 
+        float ty_off=0;
+        if(lineH>640)
+        { 
+            ty_off=(lineH-640)/2.0; 
+            lineH=640;
+        }                            //line height and limit
+        int lineOff = 320 - (lineH>>1);    //offset para ficar na altura certa da tela
         
         //Desenha a parede vertical
         glLineWidth(8);
         glBegin(GL_LINES);
-        glVertex2i(r*8+530,lineOff);
-        glVertex2i(r*8+530,lineOff+lineH);
+        glVertex2i(r*8/*+530*/,lineOff);
+        glVertex2i(r*8/*+530*/,lineOff+lineH);
         glEnd();
 
-        ra=FixAng(ra-1); //vai para o proximo ray
+        //Desenhar paredes
+        int y;
+        float ty=ty_off*ty_step/*+hmt*32*/, tx;
+
+        if(shade==1)
+        { 
+            tx=(int)(rx/2.0)%32; 
+            if(ra>180) 
+                tx=31-tx;
+        }  
+        else        
+        { 
+            tx=(int)(ry/2.0)%32; 
+            if(ra>90 && ra<270) 
+                tx=31-tx;
+        }
+
+        for(y=0;y<lineH;y++)
+        {
+            int pixel=((int)ty*32+(int)tx)*3+(hmt*32*32*3);
+            int red   =AllTextures[pixel+0]*shade;
+            int green =AllTextures[pixel+1]*shade;
+            int blue  =AllTextures[pixel+2]*shade;
+            glPointSize(8); 
+            glColor3ub(red,green,blue); 
+            glBegin(GL_POINTS); 
+            glVertex2i(r*8/*+530*/,y+lineOff); 
+            glEnd();
+            ty+=ty_step;
+        }
+
+          //---draw floors---
+        for(y=lineOff+lineH;y<640;y++)
+        {
+            float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+            tx=px/2 + cos(deg)*316*32/dy/raFix;
+            ty=py/2 - sin(deg)*316*32/dy/raFix;
+            int mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            int pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            int red   =AllTextures[pixel+0]*0.7;
+            int green =AllTextures[pixel+1]*0.7;
+            int blue  =AllTextures[pixel+2]*0.7;
+
+            glColor3ub(red,green,blue);
+            glPointSize(8);
+            glBegin(GL_POINTS);
+            glVertex2i(r*8/*+530*/,y);
+            glEnd();
+
+            //---draw ceiling---
+            mp=mapT[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            red   =AllTextures[pixel+0];
+            green =AllTextures[pixel+1];
+            blue  =AllTextures[pixel+2];
+            if(mp>0)
+            { 
+                glPointSize(8); 
+                glColor3ub(red,green,blue); 
+                glBegin(GL_POINTS); 
+                glVertex2i(r*8/*+530*/,640-y); 
+                glEnd();
+            }
+        }
+
+        ra=FixAng(ra-0.5); //vai para o proximo ray
     }
 }
 
+void drawSky()     //draw sky and rotate based on player rotation
+{
+    int x,y;
+    for(y=0;y<40;y++)
+    {
+        for(x=0;x<120;x++)
+        {
+            int xo=(int)pa*2-x; if(xo<0){ xo+=120;} xo=xo % 120; //return 0-120 based on player angle
+            int pixel=(y*120+xo)*3;
+            int red   =ceu[pixel+0];
+            int green =ceu[pixel+1];
+            int blue  =ceu[pixel+2];
+            glPointSize(8); glColor3ub(red,green,blue); glBegin(GL_POINTS); glVertex2i(x*8/*+530*/,y*8); glEnd();
+        }	
+    }
+}
+
+void tela(int s)
+{
+    int x, y;
+    int *T;
+    s = 0;
+    if(s==0)
+    T = inicio;
+
+    for(y=0;y<90;y++)
+    {
+        for(x=0;x<120;x++)
+        {
+            int pixel=(y*120+x)*3;
+            int red = T[pixel];
+            int green = T[pixel+1];
+            int blue = T[pixel+2];
+            
+            glPointSize(8);
+            glColor3ub(red, green, blue);
+            glBegin(GL_POINTS);
+            glVertex2i(x*8, y*8);
+        }
+    }
+}
 
 void init()
 {
     glClearColor(0.3,0.3,0.3,0);
-    gluOrtho2D(0,1024,510,0);
     px=150; 
     py=400; 
     pa=90;
@@ -329,68 +390,148 @@ void init()
     pdy=-sin(degToRad(pa)); 
 }
 
+float frame1=0, frame2, fps;
+
 void display()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    drawMap2D();
-    drawPlayer();
-    drawRays2D();
-    //drawWeapon();
+    if(gameState == 0)
+    {
+        tela(gameState);
+    }
+
+    if(gameState == 1)
+    {
+        frame2 = glutGet(GLUT_ELAPSED_TIME);
+        fps = (frame2 - frame1);
+        frame1 = glutGet(GLUT_ELAPSED_TIME);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if(Botoes.a == 1)
+        { 
+            pa+=0.1*fps; pa=FixAng(pa);
+            pdx=cos(degToRad(pa));
+            pdy=-sin(degToRad(pa));
+        }
+
+        if(Botoes.d == 1)
+        { 
+            pa-=0.1*fps; pa=FixAng(pa);
+            pdx=cos(degToRad(pa));
+            pdy=-sin(degToRad(pa));
+        }
+
+        int xo = 0, yo = 0;
+        
+        if(pdx<0)
+            xo = -20;
+        else
+            xo = 20; 
+
+        if (pdy<0)
+            yo = -20;
+        else
+            yo = 20;
+
+        int  ipx=px/64, ipxoA=(px+xo)/64, ipxoS=(px-xo)/64, ipy=py/64, ipyoA=(py+yo)/64, ipyoS=(py-yo)/64;
+
+        if(Botoes.w == 1)
+        { 
+            if(map[ipy*mapX+ipxoA]==0) //verificação de parede
+                px+=pdx*0.1*fps; 
+
+            if(map[ipyoA*mapX+ipx]==0) //verificação de parede
+                py+=pdy*0.1*fps;
+        }
+
+        if(Botoes.s == 1)
+        { 
+            if(map[ipy*mapX+ipxoS]==0) //verificação de parede
+                px-=pdx*0.1*fps;  
+
+            if(map[ipyoS*mapX+ipx]==0) //verificação de parede
+                py-=pdy*0.1*fps;
+        }
+
+        drawSky();
+        drawRays2D();
+        drawMap2D();
+        drawPlayer();
+
+    }
+    glutPostRedisplay();
     glutSwapBuffers();
 };
 
 void redimensiona (int w, int h)
 {
-    glutReshapeWindow(1024,512);
+    glutReshapeWindow(960,640);
 }
 
-void buttons(unsigned char key, int x, int y)
+void Pressionado(unsigned char key, int x, int y)
 {
     switch(key)
     {
         case 'a':
-        { pa+=5; pa=FixAng(pa);
-         pdx=cos(degToRad(pa));
-          pdy=-sin(degToRad(pa));
-        }
+            Botoes.a = 1;
         break;
 
         case 'd':
-        { 
-            pa-=5; pa=FixAng(pa);
-            pdx=cos(degToRad(pa));
-            pdy=-sin(degToRad(pa));
-        }
+            Botoes.d = 1;
         break;
 
         case 'w':
-        { 
-            px+=pdx*5; 
-            py+=pdy*5;
-        }
+            Botoes.w = 1;
         break;
 
         case 's':
-        { 
-            px-=pdx*5; 
-            py-=pdy*5;
-        }
+            Botoes.s = 1;
+        break;
+        
+        case 13:
+            if(gameState == 0)
+                gameState = 1;
+        break;
+    }
+
+    glutPostRedisplay();
+}
+
+void naoPressionado(unsigned char key, int x, int y)
+{
+    switch(key)
+    {
+        case 'a':
+            Botoes.a = 0;
+        break;
+
+        case 'd':
+            Botoes.d = 0;
+        break;
+
+        case 'w':
+            Botoes.w = 0;
+        break;
+
+        case 's':
+            Botoes.s = 0;
         break;
     }
     glutPostRedisplay();
-};
+}
 
 int main(int argc, char* argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowSize(1024, 512);
-    glutInitWindowPosition(200,200);
+    glutInitWindowSize(960, 640);
+    glutInitWindowPosition(glutGet(GLUT_SCREEN_WIDTH)/2-480,glutGet(GLUT_SCREEN_HEIGHT)/2-320);
     glutCreateWindow("");
+    gluOrtho2D(0,960,640,0);
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(redimensiona);
-    glutKeyboardFunc(buttons);
+    glutKeyboardFunc(Pressionado);
+    glutKeyboardUpFunc(naoPressionado);
     glutMainLoop();
 }
 //g++ -o main.exe main.cpp -I"./include" -L"./lib/x64" -lfreeglut -lopengl32 -lglu32
