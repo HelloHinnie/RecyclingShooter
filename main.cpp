@@ -5,6 +5,7 @@
 #include "Texturas/AllTextures.ppm"
 #include "Texturas/ceu.ppm"
 #include "Texturas/inicio.ppm"
+#include "Texturas/sprites.ppm"
 
 typedef struct 
 {
@@ -67,6 +68,65 @@ int mapT[] = //mapa do teto
     0,0,0,0,0,0,0,0
 };
 
+typedef struct
+{
+    int type;
+    int state;
+    int map;
+    int x, y, z;
+}sprite; sprite sp[4];
+int depth[120];
+
+void drawSprite()
+{
+    float sx = sp[0].x - px;
+    float sy = sp[0].y - py;
+    float sz = sp[0].z;
+
+    float CS = cos(degToRad(pa)), SN=sin(degToRad(pa));
+    float a = sy*CS+sx*SN;
+    float b = sx*CS-sy*SN;
+    sx = a;
+    sy = b;
+
+    sx=(sx*108.0/sy)+(120/2);
+    sy=(sz*108.0/sy)+(80/2);
+
+    int x, y;
+    int scale=32*80/b;
+    if(scale<0)
+    {
+        scale=0;
+    }
+    if(scale>120)
+    {
+        scale=120;
+    }
+
+    //textura
+    float tx=0, ty = 0, txstep = 0, tystep = 0;
+
+    for(x=sx-scale/2; x<sx+scale/2; x++)
+    {
+        for(y=0; y<scale; y++)
+        {
+            ty = 0;
+            if(sx>0 && sx<120 && b<depth[(int)sx])
+            {
+                int pixel=(((int)ty*32) + (int)tx)*3;
+                int red   =sprites[pixel+0];
+                int green =sprites[pixel+1];
+                int blue  =sprites[pixel+2];
+                glPointSize(8);
+                glColor3ub(red, green, blue);
+                glBegin(GL_POINTS);
+                glVertex2i(x*8, sy*8-y*8);
+                glEnd();
+                ty+= tystep
+            }
+        }
+    }
+}
 
 
 void drawMap2D()
@@ -262,6 +322,7 @@ void drawRays2D()
         }                            //line height and limit
         int lineOff = 320 - (lineH>>1);    //offset para ficar na altura certa da tela
         
+        depth[r] = disH;
         //Desenha a parede vertical
         glLineWidth(8);
         glBegin(GL_LINES);
@@ -388,6 +449,13 @@ void init()
     pa=90;
     pdx=cos(degToRad(pa)); 
     pdy=-sin(degToRad(pa)); 
+    sp[0].type=1;
+    sp[0].state=1;
+    sp[0].map=0;
+    sp[0].x = 3*64;
+    sp[0].y = 6*64;
+    sp[0].z = 20;
+
 }
 
 float frame1=0, frame2, fps;
@@ -454,6 +522,7 @@ void display()
 
         drawSky();
         drawRays2D();
+        drawSprite();
         drawMap2D();
         drawPlayer();
 
