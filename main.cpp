@@ -79,6 +79,8 @@ int depth[120];
 
 void drawSprite()
 {
+    for(int s=0;s<8; s++)
+    {
     float sx = sp[0].x - px;
     float sy = sp[0].y - py;
     float sz = sp[0].z;
@@ -104,7 +106,7 @@ void drawSprite()
     }
 
     //textura
-    float tx=0, ty = 0, txstep = 0, tystep = 0;
+    float tx=0, ty = 0, txstep = 32.0/(float)scale, tystep = 32.0/(float)scale;
 
     for(x=sx-scale/2; x<sx+scale/2; x++)
     {
@@ -113,7 +115,7 @@ void drawSprite()
             ty = 0;
             if(sx>0 && sx<120 && b<depth[(int)sx])
             {
-                int pixel=(((int)ty*32) + (int)tx)*3;
+                int pixel=((int)ty*32 + (int)tx)*3;
                 int red   =sprites[pixel+0];
                 int green =sprites[pixel+1];
                 int blue  =sprites[pixel+2];
@@ -122,9 +124,11 @@ void drawSprite()
                 glBegin(GL_POINTS);
                 glVertex2i(x*8, sy*8-y*8);
                 glEnd();
-                ty+= tystep
+                ty+= tystep;
             }
         }
+        tx +=txstep;
+    }
     }
 }
 
